@@ -1,0 +1,15 @@
+<div class="v-error" role="alert">
+    <p>@Message</p>
+    @if (OnRetry.HasDelegate)
+    {
+        <button type="button" class="v-btn" @onclick="OnRetry">Tentar novamente</button>
+    }
+</div>
+
+@code {
+    /// <summary>Friendly error text.</summary>
+    [Parameter, EditorRequired] public string Message { get; set; } = string.Empty;
+
+    /// <summary>Raised when the user asks to try again. The button is hidden when nothing listens.</summary>
+    [Parameter] public EventCallback OnRetry { get; set; }
+}

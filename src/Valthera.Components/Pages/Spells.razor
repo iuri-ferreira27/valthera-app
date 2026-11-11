@@ -1,0 +1,192 @@
+@page "/spells"
+@inject ValtheraApiClient Api
+
+<h1>Spells</h1>
+
+@if (_loadingClasses)
+{
+    <LoadingState Message="Carregando classes..." />
+}
+else if (_error is not null)
+{
+    <ErrorState Message="@_error" OnRetry="LoadClassesAsync" />
+}
+else if (_classes.Count == 0)
+{
+    <p class="v-muted">Nenhuma spell documentada ainda.</p>
+}
+else
+{
+    <div class="v-spells">
+        <div class="v-spells-col">
+            <h2>Classes</h2>
+            <ul class="v-list">
+                @foreach (var spellClass in _classes)
+                {
+                    <li>
+                        <button type="button" class="@(spellClass.Name == _selectedClass ? "is-active" : null)" @onclick="() => SelectClassAsync(spellClass.Name)">
+                            @spellClass.Name <small>(@spellClass.SpellCount)</small>
+                        </button>
+                    </li>
+                }
+            </ul>
+        </div>
+
+        <div class="v-spells-col">
+            <h2>Spells</h2>
+            @if (_loadingSpells)
+            {
+                <LoadingState Message="Carregando spells..." />
+            }
+            else if (_selectedClass is null)
+            {
+                <p class="v-muted">Escolha uma classe.</p>
+            }
+            else
+            {
+                <ul class="v-list">
+                    @foreach (var spell in _spells)
+                    {
+                        <li>
+                            <button type="button" class="@(spell.Name == _selectedSpell ? "is-active" : null)" @onclick="() => SelectSpellAsync(spell)">
+                                @spell.Name <small>@spell.Group</small>
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
+        <div class="v-spells-col v-spells-detail">
+            @if (_loadingDetail)
+            {
+                <LoadingState Message="Carregando spell..." />
+            }
+            else if (_detailError is not null)
+            {
+                <ErrorState Message="@_detailError" />
+            }
+            else if (_detail is not null)
+            {
+                <section class="v-card">
+                    <header>
+                        <h2>@_detail.Name</h2>
+                        <span class="v-pill">@_detail.Group</span>
+                    </header>
+
+                    @if (!string.IsNullOrWhiteSpace(_detail.Idea))
+                    {
+                        <p>@_detail.Idea</p>
+                    }
+
+                    <dl class="v-stats">
+                        @Row("Nível", _detail.Reference.Level)
+                        @Row("Recarga", _detail.Reference.Cooldown)
+                        @Row("Mana", _detail.Reference.Mana)
+                        @Row("Dano", _detail.Reference.Damage)
+                        @Row("Alcance", _detail.Reference.Range)
+                        @Row("Área", _detail.Reference.Area)
+                        @Row("Efeitos", _detail.Reference.Effects)
+                    </dl>
+
+                    @if (_detail.Variants.Count > 0)
+                    {
+                        <h3>Variantes</h3>
+                        <ul class="v-variants">
+                            @foreach (var variant in _detail.Variants)
+                            {
+                                <li><strong>@variant.Name</strong>@(string.IsNullOrWhiteSpace(variant.Note) ? null : " — " + variant.Note)</li>
+                            }
+                        </ul>
+                    }
+                </section>
+            }
+            else
+            {
+                <p class="v-muted">Escolha uma spell para ver os detalhes.</p>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<SpellClass> _classes = [];
+    private IReadOnlyList<SpellSummary> _spells = [];
+    private string? _selectedClass;
+    private string? _selectedSpell;
+    private SpellDetail? _detail;
+    private bool _loadingClasses = true;
+    private bool _loadingSpells;
+    private bool _loadingDetail;
+    private string? _error;
+    private string? _detailError;
+
+    protected override Task OnInitializedAsync() => LoadClassesAsync();
+
+    private static RenderFragment Row(string label, string? value) => builder =>
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        builder.OpenElement(0, "div");
+        builder.OpenElement(1, "dt");
+        builder.AddContent(2, label);
+        builder.CloseElement();
+        builder.OpenElement(3, "dd");
+        builder.AddContent(4, value);
+        builder.CloseElement();
+        builder.CloseElement();
+    };
+
+    private async Task LoadClassesAsync()
+    {
+        _loadingClasses = true;
+        _error = null;
+        var result = await Api.GetSpellClassesAsync();
+        _loadingClasses = false;
+        if (result.IsSuccess)
+        {
+            _classes = result.Value!;
+        }
+        else
+        {
+            _error = result.Message;
+        }
+    }
+
+    private async Task SelectClassAsync(string spellClass)
+    {
+        _selectedClass = spellClass;
+        _selectedSpell = null;
+        _detail = null;
+        _detailError = null;
+        _loadingSpells = true;
+        var result = await Api.GetSpellsAsync(spellClass);
+        _loadingSpells = false;
+        _spells = result.IsSuccess ? result.Value! : [];
+        if (!result.IsSuccess)
+        {
+            _detailError = result.Message;
+        }
+    }
+
+    private async Task SelectSpellAsync(SpellSummary spell)
+    {
+        _selectedSpell = spell.Name;
+        _detailError = null;
+        _loadingDetail = true;
+        var result = await Api.GetSpellAsync(spell.Class, spell.Name);
+        _loadingDetail = false;
+        if (result.IsSuccess)
+        {
+            _detail = result.Value;
+        }
+        else
+        {
+            _detail = null;
+            _detailError = result.Message;
+        }
+    }
+}

@@ -1,0 +1,69 @@
+@page "/"
+@implements IDisposable
+@inject ValtheraApiClient Api
+
+<h1>Valthera</h1>
+<p class="v-lead">Acompanhe o servidor, o ranking e as spells do Valthera.</p>
+
+@if (_loading && _status is null)
+{
+    <LoadingState Message="Consultando o servidor..." />
+}
+else if (_error is not null)
+{
+    <ErrorState Message="@_error" OnRetry="RefreshAsync" />
+}
+else if (_status is not null)
+{
+    <StatusCard Status="_status" />
+    <p class="v-muted v-small">Atualizado às @_status.CheckedAt.ToLocalTime().ToString("HH:mm:ss"). A página atualiza sozinha a cada 30 segundos.</p>
+}
+
+@code {
+    private static readonly TimeSpan RefreshInterval = TimeSpan.FromSeconds(30);
+
+    private Timer? _timer;
+    private bool _disposed;
+    private bool _loading = true;
+    private ServerStatus? _status;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAsync();
+        _timer = new Timer(_ => _ = InvokeAsync(RefreshAsync), null, RefreshInterval, RefreshInterval);
+    }
+
+    private async Task RefreshAsync()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        var result = await Api.GetStatusAsync();
+        if (_disposed)
+        {
+            return;
+        }
+
+        _loading = false;
+        if (result.IsSuccess)
+        {
+            _status = result.Value;
+            _error = null;
+        }
+        else
+        {
+            _error = result.Message;
+        }
+
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        _timer?.Dispose();
+    }
+}
