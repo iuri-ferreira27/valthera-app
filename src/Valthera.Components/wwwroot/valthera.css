@@ -243,3 +243,5 @@ select:focus, input:focus, button:focus-visible { outline: 2px solid var(--v-gol
     .v-nav { flex-direction: row; flex-wrap: wrap; }
     .v-main { padding: 1.25rem 1rem 2rem; }
 }
+
+h1:focus { outline: none; }
