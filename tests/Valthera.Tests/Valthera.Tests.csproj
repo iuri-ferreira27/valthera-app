@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\src\Valthera.Core\Valthera.Core.csproj" />
     <ProjectReference Include="..\..\src\Valthera.Data\Valthera.Data.csproj" />
     <ProjectReference Include="..\..\src\Valthera.Api\Valthera.Api.csproj" />
+    <ProjectReference Include="..\..\src\Valthera.Components\Valthera.Components.csproj" />
   </ItemGroup>
 
 </Project>
