@@ -1,0 +1,24 @@
+{
+  "schema_version": 2,
+  "title": "Emberwarden — Sample Spells",
+  "spells": [
+    {
+      "name": "Cinder Ward",
+      "group": "Support",
+      "idea": "Wraps the caster in embers that absorb damage and burn melee attackers.",
+      "reference": {
+        "level": "90",
+        "cd": "20 s",
+        "mana": "200",
+        "damage": "Absorbs up to 25% of the caster's health, fire reflect",
+        "range": "Self",
+        "area": "Self",
+        "fx": "effect 6"
+      },
+      "variants": [
+        { "name": "Base", "note": "Lasts 8 seconds." },
+        { "name": "Shared", "note": "Also protects the nearest ally for half the amount." }
+      ]
+    }
+  ]
+}
