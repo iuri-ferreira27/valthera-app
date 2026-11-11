@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Valthera.Api/Valthera.Api.csproj" />
+    <Project Path="src/Valthera.App/Valthera.App.csproj" />
+    <Project Path="src/Valthera.Components/Valthera.Components.csproj" />
     <Project Path="src/Valthera.Core/Valthera.Core.csproj" />
     <Project Path="src/Valthera.Data/Valthera.Data.csproj" />
   </Folder>

@@ -1,0 +1,4 @@
+/* Page styling lives in the Valthera.Components library (valthera.css). */
+html, body {
+    --maui-status-bar-safe-area-background: #14110f;
+}

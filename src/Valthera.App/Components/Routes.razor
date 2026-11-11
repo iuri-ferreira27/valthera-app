@@ -1,0 +1,12 @@
+<Router AppAssembly="typeof(MauiProgram).Assembly"
+        AdditionalAssemblies="new[] { typeof(Valthera.Components.Layout.ValtheraLayout).Assembly }">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(Valthera.Components.Layout.ValtheraLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="typeof(Valthera.Components.Layout.ValtheraLayout)">
+            <Valthera.Components.Shared.NotFoundView />
+        </LayoutView>
+    </NotFound>
+</Router>
