@@ -72,6 +72,30 @@ public sealed class ValspellCatalogTests : IDisposable
     }
 
     [Fact]
+    public void FromFolder_AcceptsASpacedHyphenAsSeparatorButNotABareHyphen()
+    {
+        Write("a.valspell.json", Doc("Soul-Rune - Hex", "Hex"));
+        Write("b.valspell.json", Doc("Soul-Rune", "Plain"));
+
+        var catalog = ValspellCatalog.FromFolder(_root);
+
+        Assert.NotNull(catalog.GetSpell("Soul-Rune", "Hex"));
+        Assert.NotNull(catalog.GetSpell("Geral", "Plain"));
+    }
+
+    [Fact]
+    public void FromFolder_TreatsALeftPartEqualToTheSpellNameAsNoClass()
+    {
+        Write("Mages/a.valspell.json", Doc("Fire Bolt — Fire Bolt (approved)", "Fire Bolt"));
+        Write("b.valspell.json", Doc("Ice Wall - Ice Wall", "Ice Wall"));
+
+        var catalog = ValspellCatalog.FromFolder(_root);
+
+        Assert.NotNull(catalog.GetSpell("Mages", "Fire Bolt"));
+        Assert.NotNull(catalog.GetSpell("Geral", "Ice Wall"));
+    }
+
+    [Fact]
     public void FromFolder_SearchesRecursively()
     {
         Write("x/y/z/deep.valspell.json", Doc("Deep — Spell", "Deep Spell"));

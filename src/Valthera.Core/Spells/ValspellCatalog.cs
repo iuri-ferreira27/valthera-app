@@ -9,16 +9,17 @@ namespace Valthera.Core.Spells;
 /// Spell catalog loaded from <c>*.valspell.json</c> documents (schema version 2).
 /// </summary>
 /// <remarks>
-/// The spell class is the part of the document <c>title</c> before an em dash (" — "). When the title has no
-/// em dash, the name of the containing sub-folder is used, or <see cref="DefaultClass"/> for files in the root.
-/// Unknown fields are ignored and invalid files are skipped with a warning.
+/// The spell class is the part of the document <c>title</c> before an em dash (" — ") or a spaced hyphen (" - ").
+/// A bare hyphen is never a separator, so names such as "Soul-Rune" stay intact. When the title has no separator,
+/// or the left part is just the spell's own name, the name of the containing sub-folder is used, or
+/// <see cref="DefaultClass"/> for files in the root. Unknown fields are ignored and invalid files are skipped with a warning.
 /// </remarks>
 public sealed class ValspellCatalog : ISpellCatalog
 {
     /// <summary>Class used when neither the title nor the folder gives one.</summary>
     public const string DefaultClass = "Geral";
 
-    private const string TitleSeparator = " — ";
+    private static readonly string[] TitleSeparators = [" — ", " - "];
 
     private readonly ILogger? _logger;
     private readonly Dictionary<(string Class, string Name), SpellDetail> _spells = new();
@@ -88,7 +89,7 @@ public sealed class ValspellCatalog : ISpellCatalog
                 throw new JsonException("Document has no 'spells' array.");
             }
 
-            var spellClass = ResolveClass(Text(root, "title"), fallbackClass);
+            var title = Text(root, "title");
             var parsed = new List<SpellDetail>();
             foreach (var spell in spells.EnumerateArray())
             {
@@ -103,7 +104,7 @@ public sealed class ValspellCatalog : ISpellCatalog
                     continue;
                 }
 
-                parsed.Add(ParseSpell(spell, spellClass, name));
+                parsed.Add(ParseSpell(spell, ResolveClass(title, name, fallbackClass), name));
             }
 
             foreach (var detail in parsed)
@@ -143,15 +144,19 @@ public sealed class ValspellCatalog : ISpellCatalog
     public SpellDetail? GetSpell(string spellClass, string name) =>
         _spells.GetValueOrDefault((spellClass.ToLowerInvariant(), name.ToLowerInvariant()));
 
-    private static string ResolveClass(string? title, string? fallbackClass)
+    private static string ResolveClass(string? title, string spellName, string? fallbackClass)
     {
         if (!string.IsNullOrWhiteSpace(title))
         {
-            var index = title.IndexOf(TitleSeparator, StringComparison.Ordinal);
+            var index = TitleSeparators
+                .Select(separator => title.IndexOf(separator, StringComparison.Ordinal))
+                .Where(i => i > 0)
+                .DefaultIfEmpty(-1)
+                .Min();
             if (index > 0)
             {
                 var fromTitle = title[..index].Trim();
-                if (fromTitle.Length > 0)
+                if (fromTitle.Length > 0 && !string.Equals(fromTitle, spellName.Trim(), StringComparison.OrdinalIgnoreCase))
                 {
                     return fromTitle;
                 }
