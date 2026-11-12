@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Valthera.Core\Valthera.Core.csproj" />
+    <ProjectReference Include="..\Valthera.Data\Valthera.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.15" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>valthera-api-7c1f2a54-3b9e-4d0a-8e61-5f2d9a1b6c33</UserSecretsId>
+  </PropertyGroup>
+
+</Project>

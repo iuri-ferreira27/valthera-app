@@ -1,0 +1,23 @@
+{
+  "schema_version": 2,
+  "title": "Tidebinder — Sample Spells",
+  "spells": [
+    {
+      "name": "Undertow",
+      "group": "Control",
+      "idea": "Pulls enemies in a small area toward the center and slows them.",
+      "reference": {
+        "level": "200",
+        "cd": "12 s",
+        "mana": "260",
+        "damage": "Low, ice",
+        "range": "Ground target, 6 sqm",
+        "area": "Circle radius 3",
+        "fx": "effect 53"
+      },
+      "variants": [
+        { "name": "Base", "note": "Slow lasts 3 seconds." }
+      ]
+    }
+  ]
+}

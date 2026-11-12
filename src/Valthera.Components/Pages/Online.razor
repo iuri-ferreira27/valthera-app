@@ -1,0 +1,70 @@
+@page "/online"
+@inject ValtheraApiClient Api
+
+<h1>Jogadores online</h1>
+
+<div class="v-toolbar">
+    <button type="button" class="v-btn" @onclick="LoadAsync" disabled="@_loading">Atualizar</button>
+</div>
+
+@if (_loading)
+{
+    <LoadingState Message="Carregando jogadores..." />
+}
+else if (_error is not null)
+{
+    <ErrorState Message="@_error" OnRetry="LoadAsync" />
+}
+else if (_players.Count == 0)
+{
+    <p class="v-muted">Ninguém está online agora.</p>
+}
+else
+{
+    <p class="v-muted v-small">@_players.Count online agora.</p>
+    <div class="v-table-wrap">
+        <table class="v-table">
+            <thead>
+                <tr>
+                    <th>Personagem</th>
+                    <th>Vocação</th>
+                    <th class="num">Nível</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var player in _players)
+                {
+                    <tr>
+                        <td><a href="@Formatting.PlayerLink(player.Name)">@player.Name</a></td>
+                        <td><VocationBadge Name="@player.Vocation" /></td>
+                        <td class="num">@Formatting.Number(player.Level)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<OnlinePlayer> _players = [];
+    private bool _loading = true;
+    private string? _error;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        var result = await Api.GetOnlineAsync();
+        _loading = false;
+        if (result.IsSuccess)
+        {
+            _players = result.Value!;
+        }
+        else
+        {
+            _error = result.Message;
+        }
+    }
+}

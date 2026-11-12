@@ -1,0 +1,93 @@
+@page "/configuracoes"
+@inject ValtheraApiClient Api
+@inject IApiEndpointStore Store
+
+<h1>Configurações</h1>
+
+<section class="v-card">
+    <h2>Servidor da API</h2>
+    <p class="v-muted">Endereço da API do Valthera usada por este app. A mudança vale na hora, sem reiniciar.</p>
+
+    <div class="v-toolbar">
+        <label class="v-grow">
+            URL da API
+            <input type="url" placeholder="@IApiEndpointStore.DefaultBaseUrl" @bind="_url" @bind:event="oninput" />
+        </label>
+    </div>
+    <div class="v-toolbar">
+        <button type="button" class="v-btn" @onclick="Save">Salvar</button>
+        <button type="button" class="v-btn" @onclick="TestAsync" disabled="@_testing">Testar conexão</button>
+        <button type="button" class="v-btn v-btn-ghost" @onclick="Reset">Restaurar padrão</button>
+    </div>
+
+    @if (_testing)
+    {
+        <LoadingState Message="Testando conexão..." />
+    }
+    else if (_message is not null)
+    {
+        <p class="@(_messageIsError ? "v-feedback v-feedback-error" : "v-feedback v-feedback-ok")" role="status">@_message</p>
+    }
+</section>
+
+@code {
+    private string _url = string.Empty;
+    private string? _message;
+    private bool _messageIsError;
+    private bool _testing;
+
+    protected override void OnInitialized() => _url = Store.GetBaseUrl();
+
+    private static bool IsValid(string text) =>
+        Uri.TryCreate(text.Trim(), UriKind.Absolute, out var uri)
+        && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+
+    private void Save()
+    {
+        if (!IsValid(_url))
+        {
+            Show("Informe uma URL válida, começando com http:// ou https://.", isError: true);
+            return;
+        }
+
+        _url = _url.Trim().TrimEnd('/');
+        Store.SetBaseUrl(_url);
+        Show("URL salva.", isError: false);
+    }
+
+    private void Reset()
+    {
+        _url = IApiEndpointStore.DefaultBaseUrl;
+        Store.SetBaseUrl(_url);
+        Show("URL restaurada para o padrão.", isError: false);
+    }
+
+    private async Task TestAsync()
+    {
+        if (!IsValid(_url))
+        {
+            Show("Informe uma URL válida, começando com http:// ou https://.", isError: true);
+            return;
+        }
+
+        _testing = true;
+        _message = null;
+        var result = await Api.PingAsync(_url);
+        _testing = false;
+        if (result.IsSuccess)
+        {
+            var status = result.Value!;
+            Show($"Conexão ok. Servidor \"{status.Name}\" está {(status.Online ? "online" : "offline")}.", isError: false);
+        }
+        else
+        {
+            Show(result.Message ?? "Falha ao conectar.", isError: true);
+        }
+    }
+
+    private void Show(string message, bool isError)
+    {
+        _message = message;
+        _messageIsError = isError;
+    }
+}

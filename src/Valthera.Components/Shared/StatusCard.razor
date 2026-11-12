@@ -1,0 +1,40 @@
+<section class="v-card v-status @(Status.Online ? "is-online" : "is-offline")" aria-label="Status do servidor">
+    <header>
+        <h2>@Status.Name</h2>
+        <span class="v-pill">@(Status.Online ? "Online" : "Offline")</span>
+    </header>
+
+    @if (Status.Online)
+    {
+        <dl class="v-stats">
+            <div>
+                <dt>Jogadores online</dt>
+                <dd>@Formatting.Number(Status.PlayersOnline) <small>/ @Formatting.Number(Status.PlayersMax)</small></dd>
+            </div>
+            <div>
+                <dt>Recorde</dt>
+                <dd>@Formatting.Number(Status.PlayersPeak)</dd>
+            </div>
+            <div>
+                <dt>Tempo no ar</dt>
+                <dd>@(Status.Uptime is { } uptime ? Formatting.Duration(uptime) : "—")</dd>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Status.Version))
+            {
+                <div>
+                    <dt>Versão</dt>
+                    <dd>@Status.Version</dd>
+                </div>
+            }
+        </dl>
+    }
+    else
+    {
+        <p class="v-muted">O servidor não respondeu ao teste de status. Tente novamente em instantes.</p>
+    }
+</section>
+
+@code {
+    /// <summary>Status to display.</summary>
+    [Parameter, EditorRequired] public ServerStatus Status { get; set; } = default!;
+}

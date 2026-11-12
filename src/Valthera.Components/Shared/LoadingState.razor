@@ -1,0 +1,9 @@
+<div class="v-loading" role="status" aria-live="polite">
+    <span class="v-spinner" aria-hidden="true"></span>
+    <span>@Message</span>
+</div>
+
+@code {
+    /// <summary>Text shown next to the spinner.</summary>
+    [Parameter] public string Message { get; set; } = "Carregando...";
+}

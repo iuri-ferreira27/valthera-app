@@ -1,0 +1,24 @@
+{
+  "schema_version": 2,
+  "title": "Stormcaller — Sample Spells",
+  "spells": [
+    {
+      "name": "Arc Lightning",
+      "group": "Attack",
+      "idea": "A bolt of lightning that jumps between nearby enemies, losing strength with every jump.",
+      "reference": {
+        "level": "150",
+        "cd": "4 s",
+        "mana": "120",
+        "damage": "Scales with magic level, energy",
+        "range": "Target, 5 sqm",
+        "area": "Chain (3 jumps)",
+        "fx": "effect 12"
+      },
+      "variants": [
+        { "name": "Base", "note": "Three jumps, each hit deals 70% of the previous one." },
+        { "name": "Overcharged", "note": "Five jumps and a short stun on the last target." }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+@page "/mortes"
+@inject ValtheraApiClient Api
+
+<h1>Últimas mortes</h1>
+
+<div class="v-toolbar">
+    <label>
+        Quantidade
+        <select value="@_limit" @onchange="OnLimitChanged">
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+        </select>
+    </label>
+    <button type="button" class="v-btn" @onclick="LoadAsync" disabled="@_loading">Atualizar</button>
+</div>
+
+@if (_loading)
+{
+    <LoadingState Message="Carregando mortes..." />
+}
+else if (_error is not null)
+{
+    <ErrorState Message="@_error" OnRetry="LoadAsync" />
+}
+else if (_deaths.Count == 0)
+{
+    <p class="v-muted">Nenhuma morte registrada.</p>
+}
+else
+{
+    <div class="v-table-wrap">
+        <table class="v-table">
+            <thead>
+                <tr>
+                    <th>Quando</th>
+                    <th>Personagem</th>
+                    <th class="num">Nível</th>
+                    <th>Morto por</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var death in _deaths)
+                {
+                    <tr>
+                        <td>@Formatting.DateTime(death.Time)</td>
+                        <td><a href="@Formatting.PlayerLink(death.Player)">@death.Player</a></td>
+                        <td class="num">@Formatting.Number(death.Level)</td>
+                        <td>
+                            @death.KilledBy
+                            @if (death.ByPlayer)
+                            {
+                                <span class="v-badge v-badge-danger">jogador</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<DeathEntry> _deaths = [];
+    private int _limit = 20;
+    private bool _loading = true;
+    private string? _error;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private Task OnLimitChanged(ChangeEventArgs e)
+    {
+        _limit = int.TryParse(e.Value?.ToString(), out var limit) ? limit : 20;
+        return LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        var result = await Api.GetDeathsAsync(_limit);
+        _loading = false;
+        if (result.IsSuccess)
+        {
+            _deaths = result.Value!;
+        }
+        else
+        {
+            _error = result.Message;
+        }
+    }
+}

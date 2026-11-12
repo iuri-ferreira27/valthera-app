@@ -1,0 +1,18 @@
+# Runs the API with the built-in sample data. No database or secrets required.
+# To use a real database, set Valthera__DataSource=MySql and provide ConnectionStrings__Valthera
+# through an environment file or your secret store (never commit it).
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: valthera-api:local
+    ports:
+      - "8080:8080"
+    environment:
+      Valthera__DataSource: Sample
+      Valthera__ServerName: Valthera
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
