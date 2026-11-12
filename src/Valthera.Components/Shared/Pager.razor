@@ -1,0 +1,21 @@
+@if (PageCount > 1)
+{
+    <nav class="v-pager" aria-label="Paginação">
+        <button type="button" class="v-btn" disabled="@(Page <= 1)" @onclick="() => GoTo(Page - 1)">Anterior</button>
+        <span>Página @Page de @PageCount</span>
+        <button type="button" class="v-btn" disabled="@(Page >= PageCount)" @onclick="() => GoTo(Page + 1)">Próxima</button>
+    </nav>
+}
+
+@code {
+    /// <summary>Current 1-based page.</summary>
+    [Parameter] public int Page { get; set; } = 1;
+
+    /// <summary>Total number of pages.</summary>
+    [Parameter] public int PageCount { get; set; } = 1;
+
+    /// <summary>Raised with the requested page number.</summary>
+    [Parameter] public EventCallback<int> PageChanged { get; set; }
+
+    private Task GoTo(int page) => PageChanged.InvokeAsync(Math.Clamp(page, 1, Math.Max(1, PageCount)));
+}

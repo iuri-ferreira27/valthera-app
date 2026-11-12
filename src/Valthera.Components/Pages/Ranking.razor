@@ -1,0 +1,161 @@
+@page "/ranking"
+@inject ValtheraApiClient Api
+@inject IExternalLinkOpener Links
+
+<h1>Ranking</h1>
+
+<div class="v-toolbar">
+    <label>
+        Categoria
+        <select value="@_category" @onchange="OnCategoryChanged">
+            @foreach (var (key, label) in Formatting.Categories)
+            {
+                <option value="@key">@label</option>
+            }
+        </select>
+    </label>
+    <label>
+        Vocação
+        <select value="@(_vocationId?.ToString() ?? string.Empty)" @onchange="OnVocationChanged">
+            <option value="">Todas</option>
+            @foreach (var vocation in _vocations)
+            {
+                <option value="@vocation.Id">@vocation.Name</option>
+            }
+        </select>
+    </label>
+    <button type="button" class="v-btn" @onclick="ExportCsvAsync">Exportar CSV</button>
+</div>
+
+@if (_exportError is not null)
+{
+    <p class="v-muted v-small">@_exportError</p>
+}
+
+@if (_loading)
+{
+    <LoadingState Message="Carregando ranking..." />
+}
+else if (_error is not null)
+{
+    <ErrorState Message="@_error" OnRetry="LoadAsync" />
+}
+else if (_page is not null)
+{
+    @if (_page.Entries.Count == 0)
+    {
+        <p class="v-muted">Nenhum personagem encontrado para esse filtro.</p>
+    }
+    else
+    {
+        <div class="v-table-wrap">
+            <table class="v-table">
+                <thead>
+                    <tr>
+                        <th class="num">#</th>
+                        <th>Personagem</th>
+                        <th>Vocação</th>
+                        <th class="num">Nível</th>
+                        <th class="num">@(_category == "level" ? "Experiência" : Formatting.CategoryLabel(_category))</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in _page.Entries)
+                    {
+                        <tr>
+                            <td class="num">@entry.Rank</td>
+                            <td><a href="@Formatting.PlayerLink(entry.Name)">@entry.Name</a></td>
+                            <td><VocationBadge Name="@entry.Vocation" /></td>
+                            <td class="num">@Formatting.Number(entry.Level)</td>
+                            <td class="num">@Formatting.Number(entry.Value)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <p class="v-muted v-small">@Formatting.Number(_page.Total) personagens no ranking.</p>
+        <Pager Page="_page.Page" PageCount="PageCount" PageChanged="GoToPageAsync" />
+    }
+}
+
+@code {
+    private const int PageSize = 25;
+
+    private string _category = "level";
+    private int? _vocationId;
+    private int _pageNumber = 1;
+    private IReadOnlyList<VocationInfo> _vocations = [];
+    private HighscorePage? _page;
+    private bool _loading = true;
+    private string? _error;
+    private string? _exportError;
+
+    private int PageCount => _page is null ? 1 : Math.Max(1, (int)Math.Ceiling(_page.Total / (double)PageSize));
+
+    protected override async Task OnInitializedAsync()
+    {
+        var vocations = await Api.GetVocationsAsync();
+        if (vocations.IsSuccess)
+        {
+            _vocations = vocations.Value!;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        var result = await Api.GetHighscoresAsync(_category, _vocationId, _pageNumber, PageSize);
+        _loading = false;
+        if (result.IsSuccess)
+        {
+            _page = result.Value;
+        }
+        else
+        {
+            _error = result.Message;
+        }
+    }
+
+    private Task OnCategoryChanged(ChangeEventArgs e)
+    {
+        _category = e.Value?.ToString() ?? "level";
+        _pageNumber = 1;
+        return LoadAsync();
+    }
+
+    private Task OnVocationChanged(ChangeEventArgs e)
+    {
+        _vocationId = int.TryParse(e.Value?.ToString(), out var id) ? id : null;
+        _pageNumber = 1;
+        return LoadAsync();
+    }
+
+    private Task GoToPageAsync(int page)
+    {
+        _pageNumber = page;
+        return LoadAsync();
+    }
+
+    private async Task ExportCsvAsync()
+    {
+        var url = Api.GetHighscoresCsvUrl(_category, _vocationId);
+        if (url is null)
+        {
+            _exportError = "A URL da API é inválida. Ajuste em Configurações.";
+            return;
+        }
+
+        _exportError = null;
+        try
+        {
+            await Links.OpenAsync(url);
+        }
+        catch (Exception)
+        {
+            _exportError = "Não foi possível abrir o navegador para baixar o CSV.";
+        }
+    }
+}
